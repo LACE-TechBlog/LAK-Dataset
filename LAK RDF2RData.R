@@ -1,3 +1,6 @@
+
+## This is a slightly modified version of Adam Cooper's RDF to dataframe script to work with the latest LAK dataset
+
 ## ***Made available using the The MIT License (MIT)***
 # Copyright (c) 2012, Adam Cooper
 # 
@@ -10,31 +13,21 @@
 
 #A short piece of code to extract from the LAK Dataset, which is RDF, and to create data.frames for saving as .RData
 #See http://www.solaresearch.org/resources/lak-dataset/
-
+install.packages("rrdf")
 library("rrdf")
 read.me<-"This is the LAK Challenge Dataset (LAK, JETS and EDM combined). Please see http://www.solaresearch.org/resources/lak-dataset/ for the data from which it was created and for the terms and conditions of use. It has been created using the RDF version using code at http://crunch.kmi.open.ac.uk/people/~acooper/LAK%20RDF2RData.R . Please report issues with the R script and R version of the data to a.r.cooper [at] bolton.ac.uk and consult http://www.solaresearch.org/resources/lak-dataset/ for other queries. There is no warranty of any kind; you use this at your own risk and without any commitment to support."
 
-source.rdf<-list(lak2011="Data/lak2011_fulltext.rdf",
-                 lak2012="Data/lak2012_fulltext.rdf",
-                 jets12="Data/jets12_fulltext.rdf",
-                 edm2008="Data/edm2008.rdf",
-                 edm2009="Data/edm2009.rdf",
-                 edm2010="Data/edm2010.rdf",
-                 edm2011="Data/edm2011.rdf",
-                 edm2012="Data/edm2012.rdf")
 
 triples<-new.rdf()
+triples<-load.rdf("Data/LAK-DATASET-DUMP.rdf", "RDF/XML")
 
-for(f in source.rdf){
-   triples<-combine.rdf(triples,load.rdf(f, "RDF/XML"))
-}
 summarize.rdf(triples)
 
 #these should be the times the source data files were created from the triple store
 get.time<-function(f){
-   file.info(f)$mtime
+  file.info(f)$mtime
 }
-mtimes<-lapply(source.rdf, get.time)
+mtimes<-lapply("Data/LAK-DATASET-DUMP.rdf", get.time)
 
 #these queries use OPTIONAL in case some content is missing. This may be unnecessary.
 #people and papers have row.names set to the subject identifier but authorship has no such
@@ -43,16 +36,16 @@ mtimes<-lapply(source.rdf, get.time)
 people.query<- paste("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>",
                      "PREFIX swrc: <http://swrc.ontoware.org/ontology#>",
                      "PREFIX foaf: <http://xmlns.com/foaf/0.1/>",
-                        "SELECT ?person ?name ?location ?affiliation WHERE {",
-                              "?person rdf:type foaf:Person;",
-                              "foaf:name ?name .",
-                                 "OPTIONAL{",
-                                 "?person foaf:based_near ?location;",
-			                        "swrc:affiliation ?affiliation;",
-                                 "foaf:firstName ?firstName;",
-                                 "foaf:lastName ?lastName",
-                                 "}",
-                         "}")
+                     "SELECT ?person ?name ?location ?affiliation WHERE {",
+                     "?person rdf:type foaf:Person;",
+                     "foaf:name ?name .",
+                     "OPTIONAL{",
+                     "?person foaf:based_near ?location;",
+                     "swrc:affiliation ?affiliation;",
+                     "foaf:firstName ?firstName;",
+                     "foaf:lastName ?lastName",
+                     "}",
+                     "}")
 people<-as.data.frame(sparql.rdf(triples,people.query,rowvarname="person"))
 
 #extract the papers
@@ -61,15 +54,15 @@ papers.query<-paste("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>",
                     "PREFIX dc: <http://purl.org/dc/elements/1.1/>",
                     "PREFIX swc: <http://data.semanticweb.org/ns/swc/ontology#>",
                     "PREFIX led: <http://data.linkededucation.org/ns/linked-education.rdf#>",
-                        "SELECT ?paper ?origin ?month ?year ?title ?abstract ?content WHERE {",
-                           "?paper rdf:type swrc:InProceedings;",
-                           "swc:isPartOf ?origin;",
-                           "dc:title ?title;",
-                           "swrc:abstract ?abstract;",
-                           "swrc:month ?month;",
-                           "swrc:year ?year .",
-                           "OPTIONAL{?paper led:body ?content}",
-                         "}")
+                    "SELECT ?paper ?origin ?month ?year ?title ?abstract ?content WHERE {",
+                    "?paper rdf:type swrc:InProceedings;",
+                    "swc:isPartOf ?origin;",
+                    "dc:title ?title;",
+                    "swrc:abstract ?abstract;",
+                    "swrc:month ?month;",
+                    "swrc:year ?year .",
+                    "OPTIONAL{?paper led:body ?content}",
+                    "}")
 
 papers<-as.data.frame(sparql.rdf(triples,papers.query,rowvarname="paper"))
 
@@ -78,20 +71,21 @@ papers<-as.data.frame(sparql.rdf(triples,papers.query,rowvarname="paper"))
 authorship.query<-paste("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>",
                         "PREFIX swc: <http://data.semanticweb.org/ns/swc/ontology#>",
                         "PREFIX foaf: <http://xmlns.com/foaf/0.1/>",
-                           "SELECT ?person ?name ?paper ?origin WHERE {",
-                              "?person rdf:type foaf:Person;",
-                              "foaf:name ?name ;",
-                              "foaf:made ?paper .",
-                              "OPTIONAL{?paper swc:isPartOf ?origin}",
-                           "}")
+                        "SELECT ?person ?name ?paper ?origin WHERE {",
+                        "?person rdf:type foaf:Person;",
+                        "foaf:name ?name ;",
+                        "foaf:made ?paper .",
+                        "OPTIONAL{?paper swc:isPartOf ?origin}",
+                        "}")
 
 authorship<-as.data.frame(sparql.rdf(triples,authorship.query))
 
 save(read.me, people, papers, authorship, mtimes, file="LAK-Dataset.RData")
 
 #quick view of authorship network
-# library(network)
-# net<-network(authorship[,c(1,3)])
-# plot(net, vertex.cex=0.6, arrowhead.cex=0.5)
-  
+#install.packages('network')
+#library(network)
+#net<-network(authorship[,c(1,3)])
+#plot(net, vertex.cex=0.6, arrowhead.cex=0.5)
+
 
