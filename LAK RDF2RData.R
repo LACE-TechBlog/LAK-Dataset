@@ -13,8 +13,20 @@
 
 #A short piece of code to extract from the LAK Dataset, which is RDF, and to create data.frames for saving as .RData
 #See http://www.solaresearch.org/resources/lak-dataset/
-install.packages("rrdf")
-library("rrdf")
+#install.packages("rrdf")
+#library("rrdf")
+
+
+#install.packages("rJava") # if not present already
+#install.packages("devtools") # if not present already
+#library(devtools)
+#install_github("rrdf", "egonw", subdir="rrdflibs")
+#install_github("rrdf", "egonw", subdir="rrdf")
+
+library(rrdflibs)
+library(rrdf)
+
+
 read.me<-"This is the LAK Challenge Dataset (LAK, JETS and EDM combined). Please see http://www.solaresearch.org/resources/lak-dataset/ for the data from which it was created and for the terms and conditions of use. It has been created using the RDF version using code at http://crunch.kmi.open.ac.uk/people/~acooper/LAK%20RDF2RData.R . Please report issues with the R script and R version of the data to a.r.cooper [at] bolton.ac.uk and consult http://www.solaresearch.org/resources/lak-dataset/ for other queries. There is no warranty of any kind; you use this at your own risk and without any commitment to support."
 
 
