@@ -16,7 +16,6 @@
 #install.packages("rrdf")
 #library("rrdf")
 
-
 #install.packages("rJava") # if not present already
 #install.packages("devtools") # if not present already
 #library(devtools)
@@ -27,13 +26,8 @@ library(rrdflibs)
 library(rrdf)
 
 Sys.setlocale('LC_ALL','C') 
-
-
-read.me<-"This is the LAK Challenge Dataset (LAK, JETS and EDM combined). Please see http://www.solaresearch.org/resources/lak-dataset/ for the data from which it was created and for the terms and conditions of use. It has been created using the RDF version using code at http://crunch.kmi.open.ac.uk/people/~acooper/LAK%20RDF2RData.R . Please report issues with the R script and R version of the data to a.r.cooper [at] bolton.ac.uk and consult http://www.solaresearch.org/resources/lak-dataset/ for other queries. There is no warranty of any kind; you use this at your own risk and without any commitment to support."
-
-
 triples<-new.rdf()
-triples<-load.rdf("Data/LAK-DATASET-DUMP.rdf", "RDF/XML")
+triples<-load.rdf("LAK-DATASET-DUMP.rdf", "RDF/XML")
 
 summarize.rdf(triples)
 
@@ -41,7 +35,7 @@ summarize.rdf(triples)
 get.time<-function(f){
   file.info(f)$mtime
 }
-mtimes<-lapply("Data/LAK-DATASET-DUMP.rdf", get.time)
+mtimes<-lapply("LAK-DATASET-DUMP.rdf", get.time)
 
 #these queries use OPTIONAL in case some content is missing. This may be unnecessary.
 #people and papers have row.names set to the subject identifier but authorship has no such
@@ -67,6 +61,7 @@ papers.query<-paste("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>",
                     "PREFIX swrc: <http://swrc.ontoware.org/ontology#>",
                     "PREFIX dc: <http://purl.org/dc/elements/1.1/>",
                     "PREFIX swc: <http://data.semanticweb.org/ns/swc/ontology#>",
+                    "PREFIX bibo: <http://purl.org/ontology/bibo/>", 
                     "PREFIX led: <http://data.linkededucation.org/ns/linked-education.rdf#>",
                     "SELECT ?paper ?origin ?month ?year ?title ?abstract ?content WHERE {",
                     "?paper rdf:type swrc:InProceedings;",
@@ -75,7 +70,8 @@ papers.query<-paste("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>",
                     "swrc:abstract ?abstract;",
                     "swrc:month ?month;",
                     "swrc:year ?year .",
-                    "OPTIONAL{?paper led:body ?content}",
+                    "OPTIONAL{{ ?paper led:body ?content}",
+                    "UNION  {?paper bibo:content ?content}}",
                     "}")
 
 papers<-as.data.frame(sparql.rdf(triples,papers.query,rowvarname="paper"))
@@ -93,13 +89,3 @@ authorship.query<-paste("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns
                         "}")
 
 authorship<-as.data.frame(sparql.rdf(triples,authorship.query))
-
-save(read.me, people, papers, authorship, mtimes, file="LAK-Dataset.RData")
-
-#quick view of authorship network
-#install.packages('network')
-#library(network)
-#net<-network(authorship[,c(1,3)])
-#plot(net, vertex.cex=0.6, arrowhead.cex=0.5)
-
-
